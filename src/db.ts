@@ -11,13 +11,6 @@ const user = process.env.DB_USER;
 const password = process.env.DB_PASSWORD;
 const database = process.env.DB_DATABASE_NAME;
 
-console.log({
-  host,
-  port,
-  user,
-  password,
-  database,
-});
 const pool = mysql.createPool({
   host,
   port,
