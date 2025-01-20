@@ -7,7 +7,6 @@ const PORT = process.env.PORT;
 app.use(async (ctx) => {
   ctx.body = {
     port: process.env.PORT,
-    secret: process.env.JWT_SECRET,
   };
 });
 
