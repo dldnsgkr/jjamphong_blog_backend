@@ -1,6 +1,6 @@
 import Router from "koa-router";
 import usersRouter from "./users";
-import loginRouter from "./login";
+import authRouter from "./auth";
 
 const router = new Router();
 
@@ -10,7 +10,7 @@ router.get("/", async (ctx) => {
 });
 
 // 사용자 라우트 추가
-router.use("/users", usersRouter.routes(), usersRouter.allowedMethods());
-router.use("/login", loginRouter.routes(), loginRouter.allowedMethods());
+router.use(usersRouter.routes(), usersRouter.allowedMethods());
+router.use(authRouter.routes(), authRouter.allowedMethods());
 
 export default router;

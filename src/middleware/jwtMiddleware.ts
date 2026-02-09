@@ -5,12 +5,14 @@ import { verifyJWTToken } from "./../lib/jwtLib";
 async function jwtMiddleware(ctx: Context, next: Next) {
   // 예외를 두고 싶은 URL 및 메소드 설정
   const exemptPaths = [
-    { method: "POST", path: "/login" }, // POST /login 경로는 JWT 검증 제외
+    { method: "POST", path: "/auth/signup" }, // POST /signup 경로는 JWT 검증 제외
+    { method: "POST", path: "/auth/login" }, // POST /login 경로는 JWT 검증 제외
+    { method: "GET", path: "/users" }, // GET /users 경로는 JWT 검증 제외
   ];
 
   // 요청 메소드와 경로가 예외 목록에 포함되는지 확인
   const isExempt = exemptPaths.some(
-    (exempt) => exempt.method === ctx.method && exempt.path === ctx.path
+    (exempt) => exempt.method === ctx.method && exempt.path === ctx.path,
   );
 
   if (isExempt) {

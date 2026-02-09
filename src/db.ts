@@ -2,21 +2,24 @@ import * as mysql from "mysql2";
 import dotenv from "dotenv";
 
 console.log("db");
-const envFile = `.env.${process.env.NODE_ENV}`;
-dotenv.config({ path: envFile });
+const NODE_ENV = process.env.NODE_ENV || "development";
+dotenv.config({ path: `.env.${NODE_ENV}` });
 
-const host = process.env.DB_HOST;
-const port = parseInt(process.env.DB_PORT as string, 10);
-const user = process.env.DB_USER;
-const password = process.env.DB_PASSWORD;
-const database = process.env.DB_DATABASE_NAME;
+const { DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_DATABASE_NAME } =
+  process.env;
 
 const pool = mysql.createPool({
-  host,
-  port,
-  user,
-  password,
-  database,
+  host: DB_HOST,
+  port: Number(DB_PORT),
+  user: DB_USER,
+  password: DB_PASSWORD,
+  database: DB_DATABASE_NAME,
+  // 커넥션 없을 때 대기
+  waitForConnections: true,
+  // 동시 커넥션 제한
+  connectionLimit: 10,
+  // 요청 큐 제한(0 = 무제한)
+  queueLimit: 0,
 });
 
 const promisePool = pool.promise();

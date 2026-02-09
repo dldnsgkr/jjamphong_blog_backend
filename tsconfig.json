@@ -2,13 +2,23 @@
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"],
   "compilerOptions": {
-    "target": "es5",
+    "rootDir": "src",
+    "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES5", "ES6"],
     "sourceMap": true,
     "outDir": "./dist",
     "strict": true,
-    "baseUrl": "./",
+    "paths": {
+      // A new catch-all that replaces the baseUrl:
+      "*": ["./src/*"],
+
+      // Every other path now has an explicit common prefix:
+      "@DTO/*": ["./src/DTO/*"],
+      "@middleware/*": ["./src/middleware/*"],
+      "@routes/*": ["./src/routes/*"],
+      "@lib/*": ["./src/lib/*"]
+    },
     "esModuleInterop": true,
     "experimentalDecorators": true
   }

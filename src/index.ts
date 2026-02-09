@@ -15,14 +15,6 @@ app.use(cors());
 app.use(logger);
 app.use(bodyParser());
 app.use(jwtMiddleware);
-// app.use(async (ctx) => {
-//   const queryParams = ctx.request.query;
-//   console.log("Received query params:", queryParams);
-
-//   const body = ctx.request.body;
-//   console.log("Received body:", body);
-//   ctx.body = { receivedQueryParams: queryParams, receivedBody: body };
-// });
 app.use(router.routes());
 app.use(router.allowedMethods());
 

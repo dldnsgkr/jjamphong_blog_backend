@@ -4,12 +4,6 @@ console.log("server");
 
 const PORT = process.env.PORT;
 
-app.use(async (ctx) => {
-  ctx.body = {
-    port: process.env.PORT,
-  };
-});
-
 // TODO: HTTPS로 연결 하는 작업 필요
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
