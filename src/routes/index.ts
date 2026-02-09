@@ -1,8 +1,20 @@
 import Router from "koa-router";
 import usersRouter from "./users";
 import authRouter from "./auth";
+import { swaggerSpec } from "../swagger";
+import { koaSwagger } from "koa2-swagger-ui";
 
 const router = new Router();
+
+router.get(
+  "/swagger",
+  koaSwagger({
+    routePrefix: false,
+    swaggerOptions: {
+      spec: swaggerSpec,
+    },
+  }),
+);
 
 // 기본 라우트
 router.get("/", async (ctx) => {
