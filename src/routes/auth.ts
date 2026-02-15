@@ -16,7 +16,55 @@ import { failureResponse, successResponse } from "lib/response";
 const authRouter = new Router({ prefix: "/auth" });
 
 /**
- * 회원가입 api
+ * @swagger
+ * /auth/signup:
+ *   post:
+ *     summary: 회원가입
+ *     description: provider_id, email, password를 이용하여 회원가입을 진행합니다.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - provider_id
+ *               - email
+ *               - password
+ *             properties:
+ *               provider_id:
+ *                 type: string
+ *                 example: user123
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: test@example.com
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: Password123!
+ *     responses:
+ *       201:
+ *         description: 회원가입 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 회원가입 성공
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     temporaryNickname:
+ *                       type: string
+ *                       example: user_ab12c
+ *       400:
+ *         description: 필수값 누락
+ *       409:
+ *         description: 이메일 또는 아이디 중복
  */
 authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
   const { provider_id, email, password } = ctx.request.body as SignupRequestDto;
@@ -87,7 +135,56 @@ authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
 });
 
 /**
- * 로그인 api
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: 로그인
+ *     description: provider_id와 password로 로그인합니다.
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - provider_id
+ *               - password
+ *             properties:
+ *               provider_id:
+ *                 type: string
+ *                 example: user123
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: Password123!
+ *     responses:
+ *       200:
+ *         description: 로그인 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 로그인 성공
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                     refreshToken:
+ *                       type: string
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         provider_id:
+ *                           type: string
+ *                         nickname:
+ *                           type: string
+ *       401:
+ *         description: 아이디 또는 비밀번호 오류
  */
 authRouter.post("/login", validate(LoginSchema), async (ctx) => {
   const { provider_id, password } = ctx.request.body as LoginRequestDto;
@@ -146,7 +243,34 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
 });
 
 /**
- * 회원 정보 수정 api
+ * @swagger
+ * /auth/user/info:
+ *   patch:
+ *     summary: 회원 정보 수정
+ *     description: 로그인한 사용자의 정보를 수정합니다.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nickname:
+ *                 type: string
+ *               provider_id:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: 프로필 업데이트 완료
+ *       400:
+ *         description: 수정할 필드 없음
+ *       401:
+ *         description: 인증 실패
  */
 authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
   const {
@@ -222,9 +346,37 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
 });
 
 /**
- * 회원 정보 api
+ * @swagger
+ * /auth/me:
+ *   get:
+ *     summary: 내 정보 조회
+ *     description: 로그인한 사용자의 정보를 조회합니다.
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: 회원 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 email:
+ *                   type: string
+ *                 nickname:
+ *                   type: string
+ *                 provider:
+ *                   type: string
+ *                 provider_id:
+ *                   type: string
+ *                 blog_title:
+ *                   type: string
+ *                 profile_image_url:
+ *                   type: string
+ *       401:
+ *         description: 인증 실패
  */
-
 authRouter.get("/me", async (ctx) => {
   const user = await db.query(
     `

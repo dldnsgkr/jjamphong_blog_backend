@@ -7,6 +7,15 @@ const rawSpec = swaggerJSDoc({
       title: "Jjamphong Blog API",
       version: "1.0.0",
     },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
   },
   apis: ["./src/routes/**/*.ts"],
 });
