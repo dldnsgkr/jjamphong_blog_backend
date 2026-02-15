@@ -2,7 +2,14 @@ import Router from "koa-router";
 import bcrypt from "bcrypt";
 import db from "../db"; // promisePool
 import { signJWTToken } from "../lib/jwtLib";
-import { LoginRequestDto, LoginSchema } from "@DTO/auth/login";
+import {
+  LoginRequestDto,
+  LoginSchema,
+  SignupRequestDto,
+  SignupSchema,
+  UpdateProfileRequestDto,
+  UpdateProfileSchema,
+} from "@DTO/auth";
 import { validate } from "@middleware/validate";
 import { failureResponse, successResponse } from "lib/response";
 
@@ -11,12 +18,8 @@ const authRouter = new Router({ prefix: "/auth" });
 /**
  * 회원가입 api
  */
-authRouter.post("/signup", async (ctx) => {
-  const { provider_id, email, password } = ctx.request.body as {
-    provider_id: string;
-    email: string;
-    password: string;
-  };
+authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
+  const { provider_id, email, password } = ctx.request.body as SignupRequestDto;
 
   /* 1. 필수값 체크 */
   if (!provider_id || !email || !password) {
@@ -101,7 +104,6 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
   const user = (rows as any[])[0];
 
   if (!user) {
-    console.log(user);
     failureResponse(ctx, "아이디 또는 비밀번호가 올바르지 않습니다.", 401);
     return;
   }
@@ -119,12 +121,21 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
     nickname: user.nickname,
   });
 
+  const isProd = process.env.NODE_ENV === "production";
+
+  ctx.cookies.set("refreshToken", token.refreshToken, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
+  });
+
   successResponse(
     ctx,
     {
-      accessToken: token,
+      accessToken: token.accessToken,
+      refreshToken: token.refreshToken,
       user: {
-        id: user.id,
+        // id: user.id,
         provider_id,
         nickname: user.nickname,
       },
@@ -132,6 +143,105 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
     "로그인 성공",
     200,
   );
+});
+
+/**
+ * 회원 정보 수정 api
+ */
+authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
+  const {
+    nickname,
+    provider_id,
+    password,
+    socialInfo,
+    // profileImage,
+    // bio,
+    // blogTitle,
+    // allowCommentNotify,
+    // allowBlogNotify,
+  } = ctx.request.body as UpdateProfileRequestDto;
+
+  const updateFields: string[] = [];
+  const values: any[] = [];
+
+  if (nickname !== undefined) {
+    updateFields.push("nickname = ?");
+    values.push(nickname);
+  }
+
+  if (provider_id !== undefined) {
+    updateFields.push("provider_id = ?");
+    values.push(provider_id);
+  }
+
+  if (password !== undefined) {
+    updateFields.push("password_hash = ?");
+    values.push(password);
+  }
+
+  // if (profileImage !== undefined) {
+  //   updateFields.push("profile_image = ?");
+  //   values.push(profileImage);
+  // }
+
+  // if (bio !== undefined) {
+  //   updateFields.push("bio = ?");
+  //   values.push(bio);
+  // }
+
+  // if (blogTitle !== undefined) {
+  //   updateFields.push("blog_title = ?");
+  //   values.push(blogTitle);
+  // }
+
+  // if (allowCommentNotify !== undefined) {
+  //   updateFields.push("allow_comment_notify = ?");
+  //   values.push(allowCommentNotify);
+  // }
+
+  // if (allowBlogNotify !== undefined) {
+  //   updateFields.push("allow_blog_notify = ?");
+  //   values.push(allowBlogNotify);
+  // }
+
+  if (updateFields.length === 0) {
+    ctx.throw(400, "수정할 필드가 없습니다.");
+  }
+
+  const sql = `
+    UPDATE users
+    SET ${updateFields.join(", ")}
+    WHERE id = ?
+  `;
+
+  values.push(ctx.state.user.id);
+
+  await db.query(sql, values);
+
+  successResponse(ctx, {}, "프로필 업데이트 완료", 200);
+});
+
+/**
+ * 회원 정보 api
+ */
+
+authRouter.get("/me", async (ctx) => {
+  const user = await db.query(
+    `
+      SELECT
+        email,
+        nickname,
+        provider,
+        provider_id,
+        blog_title,
+        profile_image_url,
+      FROM users
+      WHERE id = ?
+      `,
+    [ctx.state.user.id],
+  );
+
+  successResponse(ctx, user[0], "회원 정보 조회 성공", 200);
 });
 
 export default authRouter;

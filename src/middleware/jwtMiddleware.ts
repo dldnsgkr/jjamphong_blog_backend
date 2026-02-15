@@ -6,6 +6,7 @@ async function jwtMiddleware(ctx: Context, next: Next) {
   // 예외를 두고 싶은 URL 및 메소드 설정
   const exemptPaths = [
     { method: "GET", path: "/swagger" }, // Swagger 문서 경로는 JWT 검증 제외
+    { method: "PATCH", path: "/auth/user/info" }, // PATCH /user/info 경로는 JWT 검증 제외
     { method: "POST", path: "/auth/signup" }, // POST /signup 경로는 JWT 검증 제외
     { method: "POST", path: "/auth/login" }, // POST /login 경로는 JWT 검증 제외
     { method: "GET", path: "/users" }, // GET /users 경로는 JWT 검증 제외
