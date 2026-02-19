@@ -1,6 +1,6 @@
 import Router from "koa-router";
 import bcrypt from "bcrypt";
-import db from "../db"; // promisePool
+import db, { execute, query } from "../db"; // promisePool
 import { signJWTToken } from "../lib/jwtLib";
 import {
   LoginRequestDto,
@@ -12,6 +12,30 @@ import {
 } from "@DTO/auth";
 import { validate } from "@middleware/validate";
 import { failureResponse, successResponse } from "lib/response";
+import { RowDataPacket } from "mysql2";
+
+/* ================================
+   타입 정의
+================================ */
+
+interface IdRow extends RowDataPacket {
+  id: number;
+}
+
+interface LoginUserRow extends RowDataPacket {
+  id: number;
+  password_hash: string;
+  nickname: string;
+}
+
+interface MeRow extends RowDataPacket {
+  email: string;
+  nickname: string;
+  provider: string;
+  provider_id: string;
+  blog_title: string;
+  profile_image_url: string | null;
+}
 
 const authRouter = new Router({ prefix: "/auth" });
 
@@ -80,11 +104,12 @@ authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
   }
 
   /* 2-1. 이메일 중복 체크 */
-  const [emailUser] = await db.query(`SELECT id FROM users WHERE email = ?`, [
-    email,
-  ]);
+  const [emailUser] = await query<IdRow>(
+    `SELECT id FROM users WHERE email = ?`,
+    [email],
+  );
 
-  if ((emailUser as any[]).length > 0) {
+  if (emailUser.length > 0) {
     ctx.status = 409;
     ctx.body = {
       code: 409,
@@ -94,12 +119,12 @@ authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
   }
 
   /* 2-2. provider_id 중복 체크 */
-  const [providerUser] = await db.query(
+  const [providerUser] = await query<IdRow>(
     `SELECT id FROM users WHERE provider_id = ?`,
     [provider_id],
   );
 
-  if ((providerUser as any[]).length > 0) {
+  if (providerUser.length > 0) {
     ctx.status = 409;
     ctx.body = {
       code: 409,
@@ -117,17 +142,18 @@ authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
     .toString(36)
     .substring(2, 7)}`;
 
-  await db.query(
+  await execute(
     `
     INSERT INTO users (
       email,
       password_hash,
       provider,
       provider_id,
-      nickname
-    ) VALUES (?, ?, 'local', ?, ?)
+      nickname,
+      blog_title
+    ) VALUES (?, ?, 'local', ?, ?, ?)
     `,
-    [email, passwordHash, provider_id, temporaryNickname],
+    [email, passwordHash, provider_id, temporaryNickname, temporaryNickname],
   );
 
   /* 5. 응답 */
@@ -189,7 +215,7 @@ authRouter.post("/signup", validate(SignupSchema), async (ctx) => {
 authRouter.post("/login", validate(LoginSchema), async (ctx) => {
   const { provider_id, password } = ctx.request.body as LoginRequestDto;
 
-  const [rows] = await db.query(
+  const rows = await query<LoginUserRow>(
     `
   SELECT id, password_hash, nickname
   FROM users
@@ -198,7 +224,7 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
     [provider_id],
   );
 
-  const user = (rows as any[])[0];
+  const user = rows[0];
 
   if (!user) {
     failureResponse(ctx, "아이디 또는 비밀번호가 올바르지 않습니다.", 401);
@@ -232,7 +258,6 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
       accessToken: token.accessToken,
       refreshToken: token.refreshToken,
       user: {
-        // id: user.id,
         provider_id,
         nickname: user.nickname,
       },
@@ -340,7 +365,7 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
 
   values.push(ctx.state.user.id);
 
-  await db.query(sql, values);
+  await execute(sql, values);
 
   successResponse(ctx, {}, "프로필 업데이트 완료", 200);
 });
@@ -378,7 +403,7 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
  *         description: 인증 실패
  */
 authRouter.get("/me", async (ctx) => {
-  const user = await db.query(
+  const rows = await query<MeRow>(
     `
       SELECT
         email,
@@ -387,13 +412,14 @@ authRouter.get("/me", async (ctx) => {
         provider_id,
         blog_title,
         profile_image_url,
+        user_explain
       FROM users
       WHERE id = ?
       `,
-    [ctx.state.user.id],
+    [ctx.state.user.userId],
   );
 
-  successResponse(ctx, user[0], "회원 정보 조회 성공", 200);
+  successResponse(ctx, rows[0], "회원 정보 조회 성공", 200);
 });
 
 export default authRouter;

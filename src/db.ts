@@ -24,4 +24,29 @@ const pool = mysql.createPool({
 
 const promisePool = pool.promise();
 
+/* -----------------------------
+   SELECT 전용 query
+----------------------------- */
+export async function query<T extends mysql.RowDataPacket>(
+  sql: string,
+  params?: any[],
+): Promise<T[]> {
+  const [rows] = await promisePool.query<T[]>(sql, params);
+  return rows;
+}
+
+/* -----------------------------
+   INSERT / UPDATE / DELETE 전용
+----------------------------- */
+export async function execute(
+  sql: string,
+  params?: any[],
+): Promise<mysql.ResultSetHeader> {
+  const [result] = await promisePool.execute<mysql.ResultSetHeader>(
+    sql,
+    params,
+  );
+  return result;
+}
+
 export default promisePool;
