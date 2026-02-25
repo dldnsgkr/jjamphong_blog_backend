@@ -1,5 +1,6 @@
 import Router from "koa-router";
 import bcrypt from "bcrypt";
+import JWT from "jsonwebtoken";
 import db, { execute, query } from "../db"; // promisePool
 import { signJWTToken } from "../lib/jwtLib";
 import {
@@ -28,6 +29,11 @@ interface LoginUserRow extends RowDataPacket {
   nickname: string;
 }
 
+interface UserRow extends RowDataPacket {
+  provider_id: string;
+  nickname: string;
+}
+
 interface MeRow extends RowDataPacket {
   email: string;
   nickname: string;
@@ -38,6 +44,95 @@ interface MeRow extends RowDataPacket {
 }
 
 const authRouter = new Router({ prefix: "/auth" });
+
+authRouter.post("/refresh", async (ctx) => {
+  const oldToken = ctx.cookies.get("refreshToken");
+
+  if (!oldToken)
+    return failureResponse(
+      ctx,
+      "아이디 또는 비밀번호가 올바르지 않습니다.",
+      401,
+    );
+
+  try {
+    const decoded = JWT.verify(oldToken, process.env.JWT_REFRESH_KEY!) as {
+      userId: string;
+    };
+
+    const tokenRows = await query<IdRow>(
+      `
+        SELECT user_id
+        FROM refresh_tokens
+        WHERE token = ?
+          AND expires_at > NOW()
+      `,
+      [oldToken],
+    );
+
+    if (tokenRows.length === 0) {
+      return failureResponse(ctx, "유효하지 않은 토큰입니다.", 403);
+    }
+
+    const userRows = await query<UserRow>(
+      `
+        SELECT provider_id, nickname
+        FROM users
+        WHERE id = ?
+      `,
+      [decoded.userId],
+    );
+
+    if (userRows.length === 0) {
+      return failureResponse(ctx, "사용자를 찾을 수 없습니다.", 404);
+    }
+
+    const user = userRows[0];
+
+    await execute(
+      `
+        DELETE FROM refresh_tokens
+        WHERE token = ?
+      `,
+      [oldToken],
+    );
+
+    const token = signJWTToken({
+      userId: decoded.userId,
+    });
+
+    await execute(
+      `
+        INSERT INTO refresh_tokens (user_id, token, created_at, expires_at)
+        VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))
+      `,
+      [decoded.userId, token.refreshToken],
+    );
+
+    const isProd = process.env.NODE_ENV === "production";
+
+    ctx.cookies.set("refreshToken", token.refreshToken, {
+      httpOnly: true,
+      secure: isProd,
+      sameSite: isProd ? "none" : "lax",
+    });
+
+    return successResponse(
+      ctx,
+      {
+        accessToken: token.accessToken,
+        user: {
+          provider_id: user.provider_id,
+          nickname: user.nickname,
+        },
+      },
+      "토큰 재발급 성공",
+      200,
+    );
+  } catch {
+    return failureResponse(ctx, "토큰 검증 실패", 403);
+  }
+});
 
 /**
  * @swagger
@@ -240,8 +335,6 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
 
   const token = signJWTToken({
     userId: user.id,
-    provider_id,
-    nickname: user.nickname,
   });
 
   const isProd = process.env.NODE_ENV === "production";
@@ -252,11 +345,18 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
     sameSite: isProd ? "none" : "lax",
   });
 
+  await execute(
+    `
+    INSERT INTO refresh_tokens (user_id, token, created_at, expires_at)
+    VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))
+  `,
+    [user.id, token.refreshToken],
+  );
+
   successResponse(
     ctx,
     {
       accessToken: token.accessToken,
-      refreshToken: token.refreshToken,
       user: {
         provider_id,
         nickname: user.nickname,
@@ -265,6 +365,29 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
     "로그인 성공",
     200,
   );
+});
+
+authRouter.post("/logout", async (ctx) => {
+  const token = ctx.cookies.get("refreshToken");
+
+  if (!token) {
+    return successResponse(ctx, {}, "로그아웃 완료", 200);
+  }
+
+  await execute(
+    `
+      DELETE FROM refresh_tokens
+      WHERE token = ?
+    `,
+    [token],
+  );
+
+  ctx.cookies.set("refreshToken", "", {
+    httpOnly: true,
+    maxAge: 0,
+  });
+
+  successResponse(ctx, {}, "로그아웃 완료", 200);
 });
 
 /**

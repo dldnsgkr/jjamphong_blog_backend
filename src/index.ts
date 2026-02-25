@@ -11,7 +11,12 @@ const app = new Koa();
 
 // 미들웨어 등록
 app.use(errorHandler);
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CORS_URL, // 절대 * 쓰면 안됨
+    credentials: true,
+  }),
+);
 app.use(logger);
 app.use(bodyParser());
 app.use(jwtMiddleware);
