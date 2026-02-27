@@ -45,6 +45,70 @@ interface MeRow extends RowDataPacket {
 
 const authRouter = new Router({ prefix: "/auth" });
 
+/**
+ * @swagger
+ * /auth/refresh:
+ *   post:
+ *     summary: AccessToken 재발급
+ *     description: httpOnly 쿠키에 저장된 refreshToken을 이용하여 accessToken을 재발급합니다.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: 토큰 재발급 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 토큰 재발급 성공
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     accessToken:
+ *                       type: string
+ *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         provider_id:
+ *                           type: string
+ *                           example: user123
+ *                         nickname:
+ *                           type: string
+ *                           example: user_ab12c
+ *       401:
+ *         description: Refresh 토큰 없음 (쿠키에 없음)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 아이디 또는 비밀번호가 올바르지 않습니다.
+ *       403:
+ *         description: 유효하지 않거나 만료된 토큰
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 토큰 검증 실패
+ *       404:
+ *         description: 사용자를 찾을 수 없음
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 사용자를 찾을 수 없습니다.
+ */
 authRouter.post("/refresh", async (ctx) => {
   const oldToken = ctx.cookies.get("refreshToken");
 
@@ -367,6 +431,30 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
   );
 });
 
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: 로그아웃
+ *     description: httpOnly 쿠키에 저장된 refreshToken을 삭제하여 로그아웃을 처리합니다.
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: 로그아웃 완료
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: 로그아웃 완료
+ *                 data:
+ *                   type: object
+ *                   example: {}
+ *       500:
+ *         description: 서버 오류
+ */
 authRouter.post("/logout", async (ctx) => {
   const token = ctx.cookies.get("refreshToken");
 
