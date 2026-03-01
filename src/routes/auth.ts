@@ -514,6 +514,7 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
     provider_id,
     password,
     socialInfo,
+    userExplain,
     // profileImage,
     // bio,
     // blogTitle,
@@ -559,10 +560,10 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
   //   values.push(allowCommentNotify);
   // }
 
-  // if (allowBlogNotify !== undefined) {
-  //   updateFields.push("allow_blog_notify = ?");
-  //   values.push(allowBlogNotify);
-  // }
+  if (userExplain !== undefined) {
+    updateFields.push("user_explain = ?");
+    values.push(userExplain);
+  }
 
   if (updateFields.length === 0) {
     ctx.throw(400, "수정할 필드가 없습니다.");
@@ -574,7 +575,7 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
     WHERE id = ?
   `;
 
-  values.push(ctx.state.user.id);
+  values.push(ctx.state.user.userId);
 
   await execute(sql, values);
 
