@@ -12,7 +12,7 @@ const refreshKey = process.env.JWT_REFRESH_KEY as string;
 export function signJWTToken(userData: any) {
   const accessToken = JWT.sign(userData, accessKey, { expiresIn: "15m" });
 
-  const refreshToken = JWT.sign(userData, refreshKey, { expiresIn: "7d" });
+  const refreshToken = JWT.sign(userData, refreshKey, { expiresIn: "30d" });
 
   console.log(accessToken, refreshToken);
 

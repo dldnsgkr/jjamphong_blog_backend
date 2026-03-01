@@ -168,7 +168,7 @@ authRouter.post("/refresh", async (ctx) => {
     await execute(
       `
         INSERT INTO refresh_tokens (user_id, token, created_at, expires_at)
-        VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))
+        VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))
       `,
       [decoded.userId, token.refreshToken],
     );
@@ -412,7 +412,7 @@ authRouter.post("/login", validate(LoginSchema), async (ctx) => {
   await execute(
     `
     INSERT INTO refresh_tokens (user_id, token, created_at, expires_at)
-    VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 7 DAY))
+    VALUES (?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY))
   `,
     [user.id, token.refreshToken],
   );
