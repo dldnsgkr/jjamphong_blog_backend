@@ -517,7 +517,7 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
     userExplain,
     // profileImage,
     // bio,
-    // blogTitle,
+    blog_title,
     // allowCommentNotify,
     // allowBlogNotify,
   } = ctx.request.body as UpdateProfileRequestDto;
@@ -550,10 +550,10 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
   //   values.push(bio);
   // }
 
-  // if (blogTitle !== undefined) {
-  //   updateFields.push("blog_title = ?");
-  //   values.push(blogTitle);
-  // }
+  if (blog_title !== undefined) {
+    updateFields.push("blog_title = ?");
+    values.push(blog_title);
+  }
 
   // if (allowCommentNotify !== undefined) {
   //   updateFields.push("allow_comment_notify = ?");

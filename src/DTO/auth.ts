@@ -67,6 +67,7 @@ export const UpdateProfileSchema = z.object({
     .min(1, { message: "닉네임을 입력해주세요." })
     .optional(),
   userExplain: z.string().optional(),
+  blog_title: z.string().optional(),
 });
 
 // DTO 타입 자동 생성
