@@ -521,6 +521,7 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
     social_instagram,
     social_phone,
     social_slack,
+    theme,
     // profileImage,
     // bio,
     blog_title,
@@ -586,10 +587,10 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
   //   values.push(profileImage);
   // }
 
-  // if (bio !== undefined) {
-  //   updateFields.push("bio = ?");
-  //   values.push(bio);
-  // }
+  if (theme !== undefined) {
+    updateFields.push("theme = ?");
+    values.push(theme);
+  }
 
   if (blog_title !== undefined) {
     updateFields.push("blog_title = ?");
@@ -671,7 +672,8 @@ authRouter.get("/me", async (ctx) => {
         social_discord,
         social_github,
         social_phone,
-        social_facebook
+        social_facebook,
+        theme
       FROM users
       WHERE id = ?
       `,

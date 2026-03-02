@@ -56,6 +56,7 @@ export const UpdateProfileSchema = z.object({
   social_phone: z.string().optional(),
   social_facebook: z.string().optional(),
   email: z.string().optional(),
+  theme: z.enum(["light", "dark", "system"]).optional(),
 });
 
 // DTO 타입 자동 생성
