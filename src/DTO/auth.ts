@@ -42,25 +42,6 @@ export const UpdateProfileSchema = z.object({
     .trim()
     .min(1, { message: "비밀번호를 입력해주세요." })
     .optional(),
-  socialInfo: z
-    .object({
-      email: z
-        .string()
-        .email({ message: "유효한 이메일 주소를 입력해주세요." }),
-      github: z
-        .string()
-        .url({ message: "유효한 GitHub URL을 입력해주세요." })
-        .optional(),
-      twitter: z
-        .string()
-        .url({ message: "유효한 Twitter URL을 입력해주세요." })
-        .optional(),
-      linkedin: z
-        .string()
-        .url({ message: "유효한 LinkedIn URL을 입력해주세요." })
-        .optional(),
-    })
-    .optional(),
   nickname: z
     .string()
     .trim()
@@ -68,6 +49,13 @@ export const UpdateProfileSchema = z.object({
     .optional(),
   userExplain: z.string().optional(),
   blog_title: z.string().optional(),
+  social_instagram: z.string().optional(),
+  social_slack: z.string().optional(),
+  social_discord: z.string().optional(),
+  social_github: z.string().optional(),
+  social_phone: z.string().optional(),
+  social_facebook: z.string().optional(),
+  email: z.string().optional(),
 });
 
 // DTO 타입 자동 생성

@@ -513,8 +513,14 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
     nickname,
     provider_id,
     password,
-    socialInfo,
     userExplain,
+    email,
+    social_discord,
+    social_facebook,
+    social_github,
+    social_instagram,
+    social_phone,
+    social_slack,
     // profileImage,
     // bio,
     blog_title,
@@ -538,6 +544,41 @@ authRouter.patch("/user/info", validate(UpdateProfileSchema), async (ctx) => {
   if (password !== undefined) {
     updateFields.push("password_hash = ?");
     values.push(password);
+  }
+
+  if (email !== undefined) {
+    updateFields.push("email = ?");
+    values.push(email);
+  }
+
+  if (social_discord !== undefined) {
+    updateFields.push("social_discord = ?");
+    values.push(social_discord);
+  }
+
+  if (social_facebook !== undefined) {
+    updateFields.push("social_facebook = ?");
+    values.push(social_facebook);
+  }
+
+  if (social_github !== undefined) {
+    updateFields.push("social_github = ?");
+    values.push(social_github);
+  }
+
+  if (social_instagram !== undefined) {
+    updateFields.push("social_instagram = ?");
+    values.push(social_instagram);
+  }
+
+  if (social_phone !== undefined) {
+    updateFields.push("social_phone = ?");
+    values.push(social_phone);
+  }
+
+  if (social_slack !== undefined) {
+    updateFields.push("social_slack = ?");
+    values.push(social_slack);
   }
 
   // if (profileImage !== undefined) {
@@ -624,7 +665,13 @@ authRouter.get("/me", async (ctx) => {
         provider_id,
         blog_title,
         profile_image_url,
-        user_explain
+        user_explain,
+        social_instagram,
+        social_slack,
+        social_discord,
+        social_github,
+        social_phone,
+        social_facebook
       FROM users
       WHERE id = ?
       `,
