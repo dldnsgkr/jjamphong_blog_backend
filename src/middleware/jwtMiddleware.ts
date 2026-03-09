@@ -23,15 +23,15 @@ async function jwtMiddleware(ctx: Context, next: Next) {
   const token = ctx.headers.authorization?.split(" ")[1]; // Bearer token
 
   if (!token) {
-    ctx.status = 400;
-    ctx.body = { code: 400, message: "Token is required" };
+    ctx.status = 401;
+    ctx.body = { code: "AUTH_REQUIRED", message: "Token is required" };
     return;
   }
 
   const decoded = verifyJWTToken(ctx); // 기존의 verifyJWTToken 함수 사용
   if (!decoded) {
     ctx.status = 401;
-    ctx.body = { code: 401, message: "Invalid or expired token" };
+    ctx.body = { code: "TOKEN_EXPIRED", message: "Invalid or expired token" };
     return;
   }
 
